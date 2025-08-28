@@ -1,0 +1,55 @@
+<!DOCTYPE html >
+<head> 
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <title>HIP.htm Gabriel Dauphin </title>
+</head>
+<body>
+<p style="text-align:right;">Gabriel Dauphin (<a href="http://gabrieldauphin.neocities.org">web page</a>)</p>
+
+<h2><font color="#339966">
+Hyperspectral Image Processing </font></h2>
+
+<h4> Presentation of the lectures </h4>
+<p>
+Hyperspectral images are now available for a wide range of applications: monitoring, mapping or helping with disaster management. A major challenge lies in the interpretation of these images, a task which is referred to in computer science as the classification of images. For each pixel, we are provided with a set of intensities, one for each bandwidth. These intensities are somehow related to the surface reflectance and hence to the type of land cover or of land use. And instead of being able to model precisely this extremely complex relationship between intensities and interpretation, the scientific literature provides an abundance of techniques to capture information from the data themselves with the help of the ground truth. These lectures aim at describing some of these techniques: what are their objectives, what kind of information they use, how reliable are their predictions? To study these techniques, we will consider toy examples, sometimes get involved in the mathematical technicalities and sometimes consider simple algorithms. Some ideas developed in these lectures come from textbooks for university students, many others stem from research papers and related questions. I would expect these lectures to help getting more familiar with how proposed techniques are described in research papers. Throughout these lectures we will consider in the context of binary classification of hyperspectral images the following issues: learning regarded as an optimization problem, can we be positive about machine learning predictions, why is there a need for some strange concepts? If we have enough time, we will consider spatial issues, how we may take advantage of knowing which pixel is near which or deal with subpixel issues.
+</p>
+
+<h4> Material </h4>
+<ul>
+<li> Notebook (only started) with in appendix, all exercises and all Octave/Matlab code to yield the displayed figures in the slides
+<a href="lecture_notes.pdf"> lecture_notes.pdf </a> </li>
+<li> Slides used during the lecture 
+<a href="mlCl_slides.pdf"> mlCl_slides.pdf</a>
+</li>
+<ul>
+
+ 
+
+<h4> First lecture (27th of April 2023) </h4>
+<ul> <li>
+            Link to video <a href="https://drive.google.com/file/d/1YQNabfMuJaiEdrjLzQtgRX1shwKtrQ37/view"> HIP_lesson_1.mp4</a>
+</li>
+</ul>
+
+<h4> Second lecture (4th of May 2023) </h4>
+<ul> <li>
+            Link to video <a href="https://drive.google.com/file/d/1m0J7yCeC90rAvxDsmY6VEtamw5KncVzm/view"> HIP_lesson_2.mp4</a>
+</li>
+</ul>
+
+<h4> Third lecture (5th of May 2023) </h4>
+<ul> <li>
+            Link to video <a href="https://drive.google.com/file/d/1i5F17Riiy74yNA6WtNC1iGk-BrDiRPV5/view"> HIP_lesson_3.mp4</a>
+</li>
+</ul>
+
+<h4> Fourth lecture (8th of May 2023) </h4>
+<ul> <li>
+            Link to video <a href="https://drive.google.com/file/d/1pS6j5_GxOKgR0Rg3JAJvIQJlFZcsbSqQ/view"> HIP_lesson_4.mp4</a>
+</li>
+</ul>
+
+<p>
+Regarding triangular decompositions, in the literature there seems to be three different ideas: A=LU where L is a lower triangular matrix and U is an upper. This is obtained with the Gauss algorithm with the objective of solving linear systems. A=LL’ with L a lower matrix for A symmetric and positive, it aims at quickly solving linear systems and has applications for some matrix equations but it cannot be derived or used to yield the eigenvalue decomposition problem. Last, there is the QR decomposition where Q is a orthogonal matrix and R is triangular matrix. It also aims at solving quickly linear systems. It can be used to get the SVD decomposition. However there are many variations with specificities regarding the numerical complexity, the stability of the computations, the kind of matrices to which it applies and different kinds of applications. For research applications, I have used the last one not the two first ones.
+</p>
+</body> 

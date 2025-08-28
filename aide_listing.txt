@@ -1,0 +1,59 @@
+Listing de formules utiles pour les TP
+quantification :
+ Q=(b-a)/nb_classes;
+ x=a+round((x-a)/Q)*Q;
+echelle de temps pour un signal : 
+ N=length(x);
+ t=0:1/fe:(N-1)/fe;
+echelle de temps pour la correlation : 
+ t=-L/fe:1/fe:L/fe;
+echelle de frequence non-centree : 
+ f=0:fe/N:fe/N*(N-1);
+echelle de frequence centree : 
+ f=-fe/2:fe/N:fe/2-fe/N;
+affichage de plusieurs signaux en meme temps : 
+ figure(1); plot(t1,x1,'b-',t2,x2,'r-',t3,x3,'g-');
+melange de deux signaux de durees differentes
+ N=max(length(x),length(y));
+ x_mel=zeros(1,N); 
+ x_mel(1:length(x))=x; x_mel(1:length(y))=y;
+retarder un signal d'une duree tau*fe
+ y=[zeros(1,round(tau*fe)) x];
+sous-echantillonnage d'un facteur deux
+ y=x(1:2:end);
+sur-echantillonage d'un facteur deux 
+ y=zeros(1,2*length(x)); 
+ y(1:2:end)=x;
+ajout a un signal d'un bruit blanc centre d'ecart type sigma 
+ y=x+sigma*randn(1,length(x));
+puissance d'un signal periodique de periode N
+ P=mean((x(1:N-1)).^2); %attention a ne pas ecrire mean(x(1:N-1)).^2
+energie d'un signal 
+ E=sum(x.^2)
+rapport signal sur bruit 
+ RSB=P_signal/P_bruit;
+mis a l'echelle en dB 
+ val_dB=10*log10(val);
+transformee de Fourier en frequence non-centree : 
+ X=fft(x)/N;
+transformee de Fourier inverse en frequence non-centree : 
+ x=real(ifft(N*X));
+transformee de Fourier en frequence centree : 
+ X=fftshift(fft(x))/N;
+autocorrelation : 
+ gamma=xcorr(x,x,L);
+intercorrelation entre x et y : 
+ gamma=xcorr(y,x,L);
+reponse frequentielle d'un filtre defini par y(n)+ay(n-1)+by(n-2)=x(n)+cx(n-1)+dx(n-2)+ex(n-3)
+ B=[1 c d e]; A=[1 a b];
+ [H,F]=freqz(B,A,200,fe);
+filtrage d'un signal x par un filtre defini avec A et B 
+ y=filter(B,A,x);
+reponse impulsionnelle de longueur n d'un filtre defini avec A et B 
+ hn=impz(B,A,n)
+synthese d'un filtre MA de longueur n de frequence de coupure fc passe-bas
+ win=window(@triang,n+1);
+ hn=fir1(n,2*fc/fe,'low',win);
+synthese d'un filtre ARMA de degré n de frequence de coupure fc passe-bas 
+ [B,A]=butter(n,2*fc/fe,'low');
+ 
