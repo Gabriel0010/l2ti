@@ -117,11 +117,16 @@ def convolution(tx,x,th,h,ty):
   """
   import seb
   plt,np = seb.debut()
-  #import scipy.signal as sig
   assert len(tx)==len(x), 'tx doit avoir une echelle de temps compatible avec x '
   assert len(th)==len(h)
   Te=tx[1]-tx[0]   
   assert _regulierement_reparti_(tx)
+  if np.isscalar(ty):
+    ty = np.array([ty])
+  if np.isscalar(tx):
+    ty = np.array([tx])
+  if np.isscalar(th):
+    ty = np.array([th])
   if len(ty)>1:
     assert _est_Te_(ty,Te)
   if len(th)>1: 
@@ -312,9 +317,12 @@ def val(x):
     return x
   elif type(x)==np.array and 1==len(x):
     return x[0]
+  elif type(x)==np.ndarray and 1==len(x):
+    return x[0]
   else:
     try:
       print(f"x est de type {type(x)}, de longueur {len(x)}")
+      assert False
     except:
       assert False
       
@@ -583,12 +591,4 @@ def _is_in_(a,b):
 
 
 def _delta_t_(t,Te):
-  """private
-  calcule le décalage entre 0 et le premier instant après 0
-  """
-  import numpy as np
-  return t[0]-Te*np.floor(t[0]/Te+1e-13)
-
-  
-if __name__ == '__main__':
-    debut()  
+  ""
