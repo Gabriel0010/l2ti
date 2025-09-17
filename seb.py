@@ -1,3 +1,5 @@
+import numpy as np
+
 def debut():
   """import seb; plt,np,sig = seb.debut()"""  
   import matplotlib.pyplot as plt
@@ -33,8 +35,8 @@ def save(nom_fichier,list_nom_var,list_var):
   open_file.close()
   
 def load(nom_fichier):
-  """sauvegarde sous format binaire la liste des variables indiquees dans list_var
-  le fichier s'appelle nom_fichier
+  """lit le fichier binaire et renvoie un dictionnaire dont les clef
+  sont les noms des variables enregistres. 
   """
   import pickle
   assert len(nom_fichier)>4, 'nom_fichier doit faire plus que 4 lettres'
@@ -115,6 +117,11 @@ def convolution(tx,x,th,h,ty):
      tx doit contenir au moins deux composantes
      x et h sont supposés d'énergie finie. 
   """
+  import numpy as np
+  if np.isscalar(ty):
+    retourne_val = True
+  else: 
+    retourne_val = False
   import seb
   plt,np = seb.debut()
   assert len(tx)==len(x), 'tx doit avoir une echelle de temps compatible avec x '
@@ -144,7 +151,10 @@ def convolution(tx,x,th,h,ty):
   assert len(yconv) == len(tconv) 
   #signal y avant yconv
   if max(ty)<tconv[0]-1e-10:
-    return y
+    if retourne_val: 
+      return val(y)
+    else: 
+      return y
   #signal y au milieu de yconv
   elif (min(ty)>tconv[0]+1e-10) and (max(ty)<=tconv[-1]+1e-10):
     idebut = np.nonzero(tconv >= min(ty)-1e-10)[0][0]
@@ -171,7 +181,10 @@ def convolution(tx,x,th,h,ty):
     assert ty[iapres_fin-1]>=max(tconv)-1e-10
     y[idebut:iapres_fin]=yconv
   y=y*Te
-  return y
+  if retourne_val: 
+    return val(y)
+  else: 
+    return y
 
 def correlation(tx,x,ty,y,tz):
   """calcule l'intercorrelation entre tx,x et ty,y en tz"""
@@ -224,7 +237,7 @@ def deriver(t,x):
   return y
 
 def integrer(t,x):
-  """derive le signal x(t)"""
+  """integre le signal x(t)"""
   Te=t[1]-t[0]
   import numpy as np
   y=np.cumsum(x)*Te
@@ -287,6 +300,8 @@ def periodiser_ech_t(t,T):
 ################################################
 #outils generaux 
 def find_nearest(array, value):
+  """retourne la valeur de array la plus proche de value
+  """
   import numpy as np
   array = np.asarray(array)
   array = array[np.isfinite(array)]
@@ -294,6 +309,8 @@ def find_nearest(array, value):
   return array[idx]
 
 def where_nearest(array, value):
+  """retourne l'indice dans  array correspondant à la valeur la  plus proche de value
+  """
   import numpy as np
   array = np.asarray(array)
   idx = (np.abs(array - value)).argmin()
@@ -325,6 +342,36 @@ def val(x):
       assert False
     except:
       assert False
+
+def vect(x):
+  """vérifie si x est un numpy array contenant une ou plusieurs valeurs, 
+  une seule valeur ou autre chose
+  Si c'est autre chose, cela prend le premier élément et vérifie que celui-ci est bien 
+  un numpy array
+  """
+  import numpy as np
+  if np.isscalar(x):
+    assert False
+  elif type(x)==np.array and len(x)>1:
+    return x
+  elif type(x)==np.ndarray and 0==len(x):
+    assert False
+  else:
+    try:
+      y=x[0]
+      if (type(y)==np.array or type(y)==np.ndarray) and len(y)>0:
+        return y
+      print(f"x est de type {type(x)}, de longueur {len(x)}")
+      assert False
+    except:
+      assert False
+
+def milieux(b_val):
+  assert all(np.abs(np.diff(b_val)-(b_val[1]-b_val[0]))<1e-10)
+  b=np.arange((b_val[0]+b_val[1])/2,(b_val[-2]+b_val[-1])/2,b_val[1]-b_val[0])
+  assert len(b)==len(b_val)-1
+  return b
+
       
 ####################################################################
 #Calcul erreur quadratique   
@@ -370,7 +417,7 @@ def TFTDI(f,X,t):
     return np.array([])
   elif np.isscalar(t):
     fe=f[-1]-f[0]
-    x=np.trapezoid(X*np.exp(1j*2*np.pi*f*t),f)/fe
+    x=_trapezoid_(X*np.exp(1j*2*np.pi*f*t),f)/fe
   else:
     assert t.shape==(len(t),) ,(t.shape)
     assert len(t)>0, len(t)
@@ -379,7 +426,7 @@ def TFTDI(f,X,t):
     assert np.abs(f[-1]-f[0] - fe)<fe/len(f)*10
     x=np.zeros(t.shape,dtype=np.complex128)
     for t_ in range(len(t)):
-      x[t_] = np.trapezoid(X*np.exp(1j*2*np.pi*f*t[t_]),f)/fe
+      x[t_] = _trapezoid_(X*np.exp(1j*2*np.pi*f*t[t_]),f)/fe
   return x
 
   
@@ -418,11 +465,11 @@ def TF1(t,x,f):
   import seb
   plt,np = seb.debut()
   if np.isscalar(f):
-    X=np.trapezoid(x*np.exp(-1j*2*np.pi*f*t),t)
+    X=_trapezoid_(x*np.exp(-1j*2*np.pi*f*t),t)
   else:
     X=np.zeros(f.shape,dtype=np.complex128)
     for f_ in range(len(f)):
-      X[f_] = np.trapezoid(x*np.exp(-1j*2*np.pi*f[f_]*t),t)
+      X[f_] = _trapezoid_(x*np.exp(-1j*2*np.pi*f[f_]*t),t)
   return X
   
 def argmax_fdf(f,X):
@@ -449,7 +496,7 @@ def argmax_fdf(f,X):
   return f0,delta_f
 
 def coef_serie_Fourier(t,x,T,k):
-  """calcul les coefficients de la serie de Fourier Xk
+  """calcule les coefficients de la serie de Fourier Xk
   T est soit la periode du signal soit un tuple indiquant un intervalle sur lequel est defini x(t)
   Si T est une valeur alors l'intervalle considere est [0,T]
   k est la liste des indices des frequences calcules
@@ -469,11 +516,11 @@ def coef_serie_Fourier(t,x,T,k):
   x1=x[(t>=T[0])&(t<=T[1])]
   f=k/P
   if np.isscalar(f):
-    X=np.trapezoid(x1*np.exp(-1j*2*np.pi*f*t1),t1)/T
+    X=_trapezoid_(x1*np.exp(-1j*2*np.pi*f*t1),t1)/T
   else:
     X=np.zeros(f.shape,dtype=np.complex128)
     for f_ in range(len(f)):
-      X[f_] = np.trapezoid(x1*np.exp(-1j*2*np.pi*f[f_]*t1),t1)/P
+      X[f_] = _trapezoid_(x1*np.exp(-1j*2*np.pi*f[f_]*t1),t1)/P
   return f,X
 
     
@@ -537,9 +584,21 @@ def synchroniser(t):
   assert len(t)>=2, ('t doit avoir au moins deux composantes',len(t))
   Te=t[1]-t[0]; 
   return t+np.round(t[0]/Te)*Te-t[0]
+
+####################################################################
+def version():
+  pass
   
 ########################################################################################## 
 #Sous-programmes
+
+def _trapezoid_(y,x):
+  import numpy as np
+  try: 
+    return np.trapezoid(y,x)
+  except: 
+    Te=x[1]-x[0]
+    return np.sum(y)*Te
     
 def _est_Te_(t,Te):
   """private
@@ -591,4 +650,12 @@ def _is_in_(a,b):
 
 
 def _delta_t_(t,Te):
-  ""
+  """private
+  calcule le décalage entre 0 et le premier instant après 0
+  """
+  import numpy as np
+  return t[0]-Te*np.floor(t[0]/Te+1e-13)
+
+  
+if __name__ == '__main__':
+    debut()  
