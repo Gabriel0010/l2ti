@@ -65,7 +65,7 @@ def fonction_T(t):
   plt,np = seb.debut()
   assert type(t) == np.ndarray or np.isscalar(t)
   y=(1-np.abs(t))*(np.abs(t)<=1)
-  return y
+  return y+0
 
 
 def fonction_H(t):
@@ -74,7 +74,7 @@ def fonction_H(t):
   plt,np = seb.debut()
   assert type(t) == np.ndarray or np.isscalar(t)
   y=(t>=0)
-  return y
+  return y+0
 
   
 def fonction_P(t):
@@ -85,7 +85,7 @@ def fonction_P(t):
   plt,np = seb.debut()
   assert type(t) == np.ndarray or np.isscalar(t)
   y=(np.abs(t)<=0.5)
-  return y
+  return y+0
   
   
 def fonction_C(t):
@@ -95,7 +95,7 @@ def fonction_C(t):
   plt,np = seb.debut()
   assert type(t) == np.ndarray or np.isscalar(t)
   y=(0.5+t)*((t>=-1/2)&(t<=1/2))
-  return y
+  return y+0
   
 def fonction_D(t):
   """y=fonction_D(t) 
@@ -104,11 +104,12 @@ def fonction_D(t):
   plt,np = seb.debut()
   assert type(t) == np.ndarray or np.isscalar(t)
   y=(0.5-t)*((t>=-1/2)&(t<=1/2))
-  return y
+  return y+0
+
 
 ######################################################################################
 #Filtrage
-def convolution(tx,x,th,h,ty):
+def convolution(tx,x,th,h,ty,aff=False):
   """Le programme fournit le produit de convolution de 
      x par h aux instants demandes par ty
      tx, th et ty sont les echelles de temps de x h et y
@@ -127,14 +128,17 @@ def convolution(tx,x,th,h,ty):
   assert len(tx)==len(x), 'tx doit avoir une echelle de temps compatible avec x '
   assert len(th)==len(h)
   Te=tx[1]-tx[0]   
+  assert type(x[0]) != bool and type(x[0]) != np.bool
+  assert type(h[0]) != bool and type(h[0]) != np.bool
   assert _regulierement_reparti_(tx)
   if np.isscalar(ty):
     ty = np.array([ty])
   if np.isscalar(tx):
-    ty = np.array([tx])
+    tx = np.array([tx])
   if np.isscalar(th):
-    ty = np.array([th])
+    th = np.array([th])
   if len(ty)>1:
+    assert _est_Te_(ty,Te)
     assert _est_Te_(ty,Te)
   if len(th)>1: 
     assert _est_Te_(th,Te)
@@ -145,34 +149,52 @@ def convolution(tx,x,th,h,ty):
   assert np.abs(_delta_t_(ty,Te))<1e-10 
   assert np.abs(_delta_t_(th,Te))<1e-10
   yconv = np.convolve(x,h)
+  assert type(yconv[0]) != bool and type(yconv[0]) != np.bool
   assert len(yconv) == len(x) + len(h) - 1
   y = np.zeros_like(ty)
   tconv = np.arange(tx[0]+th[0],tx[-1]+th[-1]+1e-10,Te)
   assert len(yconv) == len(tconv) 
   #signal y avant yconv
   if max(ty)<tconv[0]-1e-10:
+    if aff: 
+      print("convolution: ty<tconv[0]")
     if retourne_val: 
       return val(y)
     else: 
       return y
   #signal y au milieu de yconv
   elif (min(ty)>tconv[0]+1e-10) and (max(ty)<=tconv[-1]+1e-10):
+    if aff: 
+      print("convolution: min(ty)>tconv[0] et max(ty)<=tconv[-1]")
+      print(max(yconv),type(yconv[0]))
     idebut = np.nonzero(tconv >= min(ty)-1e-10)[0][0]
+    assert tconv[idebut] >= min(ty)-1e-10
+    if idebut > 0:
+      assert tconv[idebut-1] < min(ty)-1e-10
     iapres_fin = len(ty)+idebut 
     assert iapres_fin-idebut == len(ty)
     y=yconv[idebut:iapres_fin]
   #signal y a cheval sur la fin    
   elif (min(ty)>tconv[0]+1e-10) and (max(ty)>tconv[-1]+1e-10):
+    if aff: 
+      print("convolution: min(ty)>tconv[0] et max(ty)>tconv[-1]")
     idebut = np.nonzero(tconv >= min(ty)-1e-10)[0][0]
-    iapres_fin=len(tconv)+2-idebut
+    # iapres_fin=len(tconv)+2-idebut
+    iapres_fin=len(tconv)-idebut
+    assert len(y[:iapres_fin]) == iapres_fin
+    assert len(yconv[idebut:]) == len(tconv)-idebut
     y[:iapres_fin]=yconv[idebut:]
   #signal y a cheval sur le debut
-  elif max(ty)<=max(tconv)+1e-10:
+  elif max(ty)<=max(tconv)+1e-12:
+    if aff: 
+      print("convolution: min(ty)<tconv[0] et max(ty)<=tconv[-1]")
     idebut=np.nonzero(ty>=min(tconv)-1e-10)[0][0]
     iapres_fin=len(ty)-idebut
     y[idebut:]=yconv[:iapres_fin]
   #signal y autour   
   else: 
+    if aff: 
+      print("convolution: min(ty)<tconv[0] et max(ty)>=tconv[-1]")
     assert min(ty)<min(tconv)
     assert max(ty)>max(tconv)
     idebut=np.nonzero(ty>=min(tconv)-1e-10)[0][0]
@@ -192,6 +214,8 @@ def correlation(tx,x,ty,y,tz):
   plt,np = seb.debut()
   assert len(ty.shape)==1 ,('le vecteur ty doit etre colonne c-a-d une dimension',ty.shape,len(ty.shape))
   assert len(y.shape)==1 ,('le vecteur ty doit etre colonne c-a-d une dimension',y.shape,len(y.shape))
+  assert type(y[0]) != bool and type(y[0]) != np.bool
+  assert type(x[0]) != bool and type(x[0]) != np.bool
   ty2=np.flipud(-ty)
   y2=np.flipud(y)
   gamma=seb.convolution(tx,x,ty2,y2,tz)
@@ -372,6 +396,22 @@ def milieux(b_val):
   assert len(b)==len(b_val)-1
   return b
 
+def dic_moyenne(dic,dic_nv,K): 
+  """programme permettant de simplifier la répétition d'une tache 
+  avec des donnees aleatoires
+  dic est soit None soit un dictionnaire en cours de fabrication
+  dic_nv est un dictionnaire contenant des valeurs ou des vecteurs a l'iteration k
+  K est le nombre d iterations
+  ce programme realise une moyenne des dic_nv
+  """
+  if None == dic:
+    dic={}
+    for key,value in dic_nv.items():
+      dic[key] = dic_nv[key]/K
+  else: 
+    for key,value in dic_nv.items():
+      dic[key] = dic[key] + dic_nv[key]/K
+  return dic
       
 ####################################################################
 #Calcul erreur quadratique   
@@ -584,6 +624,13 @@ def synchroniser(t):
   assert len(t)>=2, ('t doit avoir au moins deux composantes',len(t))
   Te=t[1]-t[0]; 
   return t+np.round(t[0]/Te)*Te-t[0]
+
+
+################################################################
+#mathématiques
+def erf(x):
+  import scipy.special as ss
+  return ss.erf(x)
 
 ####################################################################
 def version():
