@@ -84,8 +84,8 @@ def fonction_P(t):
   import seb
   plt,np = seb.debut()
   assert type(t) == np.ndarray or np.isscalar(t)
-  y=(np.abs(t)<=0.5)
-  return y+0
+  y=(np.abs(t)<=0.5)+0
+  return y
   
   
 def fonction_C(t):
@@ -123,10 +123,14 @@ def convolution(tx,x,th,h,ty,aff=False):
     retourne_val = True
   else: 
     retourne_val = False
+  assert not np.isscalar(tx)
+  assert not np.isscalar(x)
+  assert not np.isscalar(th)
+  assert not np.isscalar(h), (h,ty)
   import seb
   plt,np = seb.debut()
   assert len(tx)==len(x), 'tx doit avoir une echelle de temps compatible avec x '
-  assert len(th)==len(h)
+  assert len(th)==len(h), (len(th),len(h))
   Te=tx[1]-tx[0]   
   assert type(x[0]) != bool and type(x[0]) != np.bool
   assert type(h[0]) != bool and type(h[0]) != np.bool
@@ -139,9 +143,8 @@ def convolution(tx,x,th,h,ty,aff=False):
     th = np.array([th])
   if len(ty)>1:
     assert _est_Te_(ty,Te)
-    assert _est_Te_(ty,Te)
   if len(th)>1: 
-    assert _est_Te_(th,Te)
+    assert _est_Te_(th,Te)    
   dtx = _delta_t_(tx,Te); tx = tx-dtx
   dty = _delta_t_(ty,Te); ty = ty-dty
   dth = _delta_t_(th,Te); th = th-dth
@@ -323,6 +326,48 @@ def periodiser_ech_t(t,T):
 
 ################################################
 #outils generaux 
+def linspace(start=0, stop=1, num=50,dtype=np.float64):
+  """identique a numpy.linspace, sauf que cette fonction assure 
+  que le vecteur resultant a des valeurs qui sont des multiples 
+  d'un certain pas. 
+  """
+  assert num >= 0
+  if 0 == num:
+    return np.linspace(start,stop,num,dtype)
+  if _est_ok_linspace_(start,stop,num):
+    return np.linspace(start,stop,num,dtype)
+  else:
+    obj_old   = (num-1)*start/(stop-start)
+    if obj_old > 0: 
+      obj_new   = val(np.ceil(obj_old))
+    else: 
+      obj_new   = val(np.floor(obj_old))
+    # stop_new  = ((num-1)/obj_new+1)/((num-1)/obj_old+1)*stop
+    stop_new    = val(start + (num-1)*start/obj_new)
+    start_new   = start
+    assert _est_ok_linspace_(start_new,stop_new,num), (
+      start,stop,num,start_new,stop_new,(num-1)*start_new/(stop_new-start_new),
+      (num-1)*start_new/(stop_new-start_new)-int((num-1)*start_new/(stop_new-start_new)),1/(stop_new-start_new)
+      )
+    return np.linspace(start_new,stop_new,num,dtype)
+
+def arange(start=0, stop=1, step=1, dtype=np.float64):
+  """identique a numpy.linspace, sauf que cette fonction assure 
+  que le vecteur resultant a des valeurs qui sont des multiples 
+  d'un certain pas. 
+  """
+  step = val(step)
+  assert np.isscalar(step), step
+  if step>0:
+    start_new = val(np.ceil(start/step))*step
+  elif step<0: 
+    start_new = val(np.ceil(start/step))*step
+  else:
+    print("step doit etre non nul")
+    assert False    
+  return np.arange(start_new,stop,step,dtype)
+
+
 def find_nearest(array, value):
   """retourne la valeur de array la plus proche de value
   """
@@ -392,8 +437,9 @@ def vect(x):
 
 def milieux(b_val):
   assert all(np.abs(np.diff(b_val)-(b_val[1]-b_val[0]))<1e-10)
-  b=np.arange((b_val[0]+b_val[1])/2,(b_val[-2]+b_val[-1])/2,b_val[1]-b_val[0])
-  assert len(b)==len(b_val)-1
+  # b=np.arange((b_val[0]+b_val[1])/2,(b_val[-2]+b_val[-1])/2,b_val[1]-b_val[0])
+  b = (b_val[0]+b_val[1])/2+np.arange(len(b_val)-1)*(b_val[1]-b_val[0])
+  assert len(b)==len(b_val)-1, (b,len(b),len(b_val))
   return b
 
 def dic_moyenne(dic,dic_nv,K): 
@@ -623,7 +669,8 @@ def synchroniser(t):
   import numpy as np
   assert len(t)>=2, ('t doit avoir au moins deux composantes',len(t))
   Te=t[1]-t[0]; 
-  return t+np.round(t[0]/Te)*Te-t[0]
+  ind = np.argmin(np.abs(t))
+  return t+np.round(t[ind]/Te)*Te-t[ind]
 
 
 ################################################################
@@ -701,8 +748,35 @@ def _delta_t_(t,Te):
   calcule le décalage entre 0 et le premier instant après 0
   """
   import numpy as np
-  return t[0]-Te*np.floor(t[0]/Te+1e-13)
+  ind = np.argmin(np.abs(t))
+  return t[ind]-Te*np.round(t[ind]/Te)
 
+def _is_int_(val,epsi=1e-7)-> bool:
+  """private
+  vérifie si val est approximativement un entier
+  """
+  return np.abs(val-np.round(val))<epsi
+
+def _is_zero_(val,epsi=1e-7)-> bool:
+  """private
+  vérifie si val est approximativement un entier
+  """
+  return np.abs(val)<epsi
+
+  
+def _est_ok_linspace_(start,stop,num)-> bool: 
+  """private
+  verifie si les parametres de la fonction linspace vont donner 
+  des valeurs qui correspondent au traitement du signal
+  """
+  if _is_zero_(start):
+    return True
+  if 1 == num: 
+    return True    
+  if _is_zero_(stop-start):
+    return False
+  val = (num-1)*start/(stop-start)  
+  return _is_int_(val,1e-7*max(start,start/(stop-start)**2,1/(stop-start)**2,1)*max(1,num-1))
   
 if __name__ == '__main__':
     debut()  
