@@ -198,7 +198,7 @@ def convolution(tx,x,th,h,ty,aff=False):
   else: 
     if aff: 
       print("convolution: min(ty)<tconv[0] et max(ty)>=tconv[-1]")
-    assert min(ty)<min(tconv)
+    assert min(ty)<min(tconv)+1e-8, (min(ty),min(tconv))
     assert max(ty)>max(tconv)
     idebut=np.nonzero(ty>=min(tconv)-1e-10)[0][0]
     assert ty[idebut]>=min(tconv)-1e-10
@@ -241,10 +241,12 @@ def sol_eq_diff(coef,t):
   assert type(t) == np.ndarray
   t1,t2 = _cut_t_(t)
   assert len(t1)+len(t2) == len(t)
-  assert max(t1) <= 0
-  assert min(t2) >= 0
-  assert _is_in_(t1,t)
-  assert _is_in_(t2,t)
+  if not _is_empty_(t1):
+    assert max(t1) <= 0, (max(t1))
+    assert _is_in_(t1,t)
+  if not _is_empty_(t2):
+    assert min(t2) >= 0, (min(t2))
+    assert _is_in_(t2,t)
   import scipy.signal as sig
   y1 = np.zeros_like(t1)
   if 0 == len(t2):
@@ -458,7 +460,13 @@ def dic_moyenne(dic,dic_nv,K):
     for key,value in dic_nv.items():
       dic[key] = dic[key] + dic_nv[key]/K
   return dic
-      
+ 
+def zero_aj(x,nb):
+  """programme inserant nb zeros apres chaque valeur"""
+  y = np.zeros((1+nb)*len(x),dtype=type(x[0]))
+  y[::(1+nb)]=x
+  return y
+ 
 ####################################################################
 #Calcul erreur quadratique   
 def erreur_quad(fun,intervalle):
@@ -492,7 +500,7 @@ def TFTD(t,x,f):
     for f_ in range(len(f)):
       X[f_]=np.sum(x*np.exp(-1j*2*np.pi*f[f_]*t))
 
-  return X  
+  return X
 
 def TFTDI(f,X,t):
   assert len(X.shape) == 1, "x ne doit pas etre une matrice"
@@ -777,6 +785,20 @@ def _est_ok_linspace_(start,stop,num)-> bool:
     return False
   val = (num-1)*start/(stop-start)  
   return _is_int_(val,1e-7*max(start,start/(stop-start)**2,1/(stop-start)**2,1)*max(1,num-1))
+
+def _is_empty_(var)->bool:
+  """private 
+  renvoie vrai si c'est vide
+  """
+  if all(var == None): 
+    return True
+  elif 0 == len(var):
+    return True 
+  elif 0 == np.sum(var.shape):
+    return True
+  else: 
+    return False
   
 if __name__ == '__main__':
     debut()  
+
