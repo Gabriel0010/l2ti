@@ -283,14 +283,14 @@ def retarder(t,x,tau):
   import numpy as np
   assert np.isscalar(tau), tau
   if tau<0:
-    ind=round(-tau/Te)
+    ind=int(round(-tau/Te))
     y1=x[ind:]
     y2=np.zeros(ind)
     y=np.concatenate((y1,y2))
     # print(len(y),len(x),ind,len(y1),len(y2))
     assert len(y)==len(x)
   elif tau>0:
-    ind=round(tau/Te)
+    ind=int(round(tau/Te))
     # print(type(ind),ind)
     y1=x[:len(x)-ind]
     y2=np.zeros(ind)
@@ -640,14 +640,14 @@ def TFD(t,s,T,bool):
   s1=s[(t>=T[0])&(t<=T[1])]
   fe=1/(t[1]-t[0])
   assert np.abs(P*fe - np.round(P*fe))<1e-8, ('N doit etre entier',P,fe,np.abs(P*fe - np.round(P*fe)))
-  N=round(P*fe)
+  N=int(round(P*fe))
   if 1==N:
     f=np.array([0]); 
     S=np.array([s1[0]])
     return f,S
   fe=N/P
   if bool:
-    if N/2==round(N/2):
+    if N/2==int(round(N/2)):
       f=np.concatenate((np.arange(-fe/2,0,fe/N),np.arange(0,fe/2,fe/N)))
     else: 
       f=np.concatenate((np.arange(-fe/2+fe/N/2,0,fe/N),np.arange(0,fe/2,fe/N)))
@@ -661,7 +661,7 @@ def TFD(t,s,T,bool):
   import scipy.fft
   S_fft=scipy.fft.fft(s)/N
   if bool: 
-    S=np.concatenate((S_fft[round(N/2):],S_fft[0:round(N/2)]))
+    S=np.concatenate((S_fft[int(round(N/2)):],S_fft[0:int(round(N/2))]))
   else: 
     S=S_fft
   assert len(f)==len(S)  
